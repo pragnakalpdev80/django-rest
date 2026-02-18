@@ -1,6 +1,6 @@
 # api/models.py
 from django.db import models
-
+import datetime
 class Book(models.Model):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
@@ -19,15 +19,21 @@ class Book(models.Model):
         verbose_name_plural = 'Books'
 
 
-# class Task(models.Model):
-#     title = models.CharField(max_length=100)
-#     desc = models.TextField(null=True, blank=True)
-#     completed = models.BooleanField(default=False)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+class Task(models.Model):
+    class Priority(models.TextChoices):
+        High = "high"
+        Medium = "medium"
+        Low = "low"
+    title = models.CharField(max_length=100)
+    desc = models.TextField(null=True, blank=True)
+    completed = models.BooleanField(default=False)
+    priority = models.CharField(choices=Priority,max_length=10,default="low")
+    due_date = models.DateField(default=datetime.datetime.now())
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
-#     def __str__(self):
-#         return self.title
+    def __str__(self):
+        return self.title
 
-#     class Meta:
-#         ordering = ['-created_at']
+    class Meta:
+        ordering = ['-created_at']

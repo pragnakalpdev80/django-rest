@@ -14,11 +14,11 @@ class BookSerializer(serializers.ModelSerializer):
 #         fields = ['id', 'title', 'author', 'published_date', 'isbn', 'description', 'created_at', 'updated_at']
 #         read_only_fields = ['id', 'created_at', 'updated_at']
 
-# class TaskSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Task
-#         fields = ['id', 'title', 'desc', 'completed', 'created_at', 'updated_at']
-#         read_only_fields = ['id', 'created_at', 'updated_at']
+class TaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ['id', 'title', 'desc', 'completed', 'priority', 'due_date', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 
