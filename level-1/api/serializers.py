@@ -1,6 +1,6 @@
 # api/serializers.py
 from rest_framework import serializers
-from .models import Book, Task
+from .models import Book, Task, Author
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -21,6 +21,10 @@ class TaskSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Author
+        fields = ['id', 'name', 'bio', 'email']
 
 # class BookSerializer(serializers.ModelSerializer):
 #     class Meta:

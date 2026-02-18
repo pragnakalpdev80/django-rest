@@ -1,12 +1,17 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
-from .models import Book,Task
-from .serializers import BookSerializer, TaskSerializer
+from .models import Book, Task, Author
+from .serializers import BookSerializer, TaskSerializer, AuthorSerializer
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
+
+
+class AuthorViewSet(viewsets.ModelViewSet):
+    queryset = Author.objects.all()
+    serializer_class = AuthorSerializer
 
 
 class TaskViewSet(viewsets.ModelViewSet):

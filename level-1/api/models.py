@@ -37,3 +37,8 @@ class Task(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+class Author(models.Model):
+    name = models.CharField(max_length=30)
+    bio = models.TextField(max_length=200)
+    email = models.EmailField()
