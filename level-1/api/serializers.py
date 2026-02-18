@@ -1,6 +1,6 @@
 # api/serializers.py
 from rest_framework import serializers
-from .models import Book, Task, Author
+from .models import Book, Task, Author, Product
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -25,6 +25,22 @@ class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
         fields = ['id', 'name', 'bio', 'email']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    
+    def validate(self,data):
+        if data['price'] <= 0:
+            raise serializers.ValidationError("Price must be greater than 0")
+        if data['stock'] < 0:
+            raise serializers.ValidationError("stock must be greater than or equal to 0")
+        return data
+        
+    class Meta:
+        model = Product
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
 
 # class BookSerializer(serializers.ModelSerializer):
 #     class Meta:

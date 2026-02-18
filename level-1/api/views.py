@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
-from .models import Book, Task, Author
-from .serializers import BookSerializer, TaskSerializer, AuthorSerializer
+from .models import Book, Task, Author, Product
+from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
@@ -52,6 +52,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             'results': serializer.data  
         })
 
+
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
 def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
