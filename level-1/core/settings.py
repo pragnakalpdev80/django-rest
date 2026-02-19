@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',  # Add DRF
+    'rest_framework_simplejwt',
     'api',             # Add your app
     'corsheaders',  # Add this - must be before other apps
 
@@ -129,6 +132,12 @@ STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'EXCEPTION_HANDLER': 'api.views.custom_exception_handler',
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
@@ -140,4 +149,59 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
     ],
     'DEFAULT_PAGINATION_CLASS': None,  # We'll add pagination in Level 2
+    'DEFAULT_THROTTLE_CLASSES': [
+        # AnonRateThrottle: Throttles unauthenticated users by IP address
+        'rest_framework.throttling.AnonRateThrottle',
+        # UserRateThrottle: Throttles authenticated users by user ID
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    # Rate limits for each throttle class
+    # Keys must match the 'scope' of throttle classes
+    'DEFAULT_THROTTLE_RATES': {
+        # 'anon' = scope for AnonRateThrottle
+        # 100 requests per hour for anonymous (unauthenticated) users
+        'anon': '100/hour',
+        # 'user' = scope for UserRateThrottle
+        # 1000 requests per hour for authenticated users
+        'user': '1000/hour',
+
+        'burst': '60/min',
+        'sustained': '1000/day'},
+        
+    'NUM_PROXIES': 1, 
+}
+
+SIMPLE_JWT ={
+    # How long access token is valid (short = more secure, but users need to refresh more often)
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    
+    # How long refresh token is valid (longer = users stay logged in longer)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    
+    # Security: Issue new refresh token when old one is used (prevents token reuse)
+    'ROTATE_REFRESH_TOKENS': True,
+    
+    # Security: Add old refresh token to blacklist after rotation (prevents reuse)
+    'BLACKLIST_AFTER_ROTATION': True,
+    
+    # Track when user last logged in (useful for security monitoring)
+    'UPDATE_LAST_LOGIN': True,
+    
+    # Algorithm to sign tokens (HS256 = HMAC SHA-256, fast and secure)
+    'ALGORITHM': 'HS256',
+    
+    # Secret key to sign tokens (use Django's SECRET_KEY for security)
+    'SIGNING_KEY': SECRET_KEY,
+    
+    # Token type in Authorization header (Bearer is standard OAuth2 format)
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    
+    # Header name where token is sent (HTTP_AUTHORIZATION = "Authorization: Bearer <token>")
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    
+    # Which User model field to use as user ID (usually 'id')
+    'USER_ID_FIELD': 'id',
+    
+    # Where to store user ID in token payload (used when decoding token)
+    'USER_ID_CLAIM': 'user_id',
 }

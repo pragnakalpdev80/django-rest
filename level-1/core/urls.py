@@ -17,8 +17,22 @@ Including another URLconf
 # core/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,  # POST /api/token/ - Get tokens (login)
+    TokenRefreshView,     # POST /api/token/refresh/ - Get new access token
+    TokenVerifyView,      # POST /api/token/verify/ - Check if token is valid
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    # JWT authentication endpoints
+    # POST /api/token/ - Login: Send username/password, get access+refresh tokens
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    
+    # POST /api/token/refresh/ - Refresh: Send refresh token, get new access token
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # POST /api/token/verify/ - Verify: Send token, check if it's valid
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]

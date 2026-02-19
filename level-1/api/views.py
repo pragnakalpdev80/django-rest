@@ -1,10 +1,23 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 from .models import Book, Task, Author, Product
-from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer
+from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer
+from django.contrib.auth import authenticate,login,logout
+from django.shortcuts import render, get_object_or_404,redirect
+from django.views import View
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView,LogoutView
+from django.contrib import messages
+from .forms import RegistrationForm, LoginForm
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .permissions import IsOwnerOrReadOnly
+
 
 class BookViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly]
+
     queryset = Book.objects.all()
     serializer_class = BookSerializer
 
@@ -74,6 +87,71 @@ def custom_exception_handler(exc, context):
     
     return response
 
+
+class UserRegistrationView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserRegistrationSerializer
+    permission_classes = []
+ 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)        
+        serializer.is_valid(raise_exception=True)
+        print(f"hello :-------------- {serializer}")
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'user': serializer.data,  # User information (username, email, etc.)
+            'refresh': str(refresh),  # Refresh token (long-lived, used to get new access tokens)
+            'access': str(refresh.access_token),  # Access token (short-lived, used for API requests)
+        }, status=status.HTTP_201_CREATED)  # 201 = Created (successful resource creation)
+    
+
+class LoginView(LoginView):
+    template_name = 'api/login.html'
+    def get(self, request):
+        form= LoginForm()
+        return render(request, self.template_name, { 'form': form})
+
+    def post(self, request):
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(username=username, password=password)
+        print(user)
+        if user is None:
+            messages.error(request,"Username or Password not matched")
+            return redirect('/api/login/')
+        login(request,user)
+        return redirect("/api/books/")
+    
+
+class LogoutView(View):
+    def post(self,request):
+        if request.user.is_authenticated:
+            logout(request)
+            return redirect('/api/login/')
+
+
+class RegistrationView(View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect("/api/books/")
+        form = RegistrationForm()
+        return render(request, 'api/register.html', { 'form': form})  
+    
+    def post(self, request):
+        form = RegistrationForm(request.POST)
+        print(request)
+        try:
+            if form.is_valid():
+                print("valid")
+                form.save()
+                return redirect('/api/login/')   
+        except Exception as error:
+            print("invalid data")
+            print(error)
+        return redirect('/api/register/')     
 
 # # api/views.py
 # from rest_framework.views import APIView
