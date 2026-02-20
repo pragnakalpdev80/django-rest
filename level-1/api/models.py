@@ -40,14 +40,13 @@ class Book(TimestampedModel):
 
 
 class Task(TimestampedModel):
-    class Priority(models.TextChoices):
-        High = "high"
-        Medium = "medium"
-        Low = "low"
+    PRIORITY = (
+        ('low',"low"),('medium',"medium"),('high',"high"),
+    )
     title = models.CharField(max_length=100)
     desc = models.TextField(null=True, blank=True)
     completed = models.BooleanField(default=False)
-    priority = models.CharField(choices=Priority,max_length=10)
+    priority = models.CharField(choices=PRIORITY,max_length=10)
     due_date = models.DateField()
     # created_at = models.DateTimeField(auto_now_add=True)
     # updated_at = models.DateTimeField(auto_now=True)

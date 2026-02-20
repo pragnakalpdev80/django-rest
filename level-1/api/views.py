@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView,LogoutView
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, generics, filters
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
@@ -14,7 +15,7 @@ from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, Produ
 from .forms import RegistrationForm, LoginForm
 from .permissions import IsOwnerOrReadOnly
 from .throttles import BookCreateThrottle
-from .filters import BookFilter
+from .filters import BookFilter, TaskFilter
 from .pagination import BookLimitOffsetPagination
 
 
@@ -24,7 +25,7 @@ class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     filterset_class = BookFilter
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['title', 'author', 'published_date', 'created_at']
     search_fields = ['title', 'author', 'description']
     ordering = ['-created_at']
@@ -43,6 +44,11 @@ class AuthorViewSet(viewsets.ModelViewSet):
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    filterset_class = TaskFilter
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    ordering_fields = ['title', 'priority', 'created_at']
+    search_fields = ['title', 'desc']
+    ordering = ['-created_at']
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
