@@ -1,8 +1,7 @@
 # api/serializers.py
 from rest_framework import serializers
-from .models import Book, Task, Author, Product
+from .models import Book, Task, Author, Product, UserProfile
 from django.contrib.auth.models import User
-
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -10,11 +9,13 @@ class BookSerializer(serializers.ModelSerializer):
         model = Book
         fields = ['id', 'title', 'author', 'published_date', 'isbn', 'owner']
 
+
 # class BookSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Book
 #         fields = ['id', 'title', 'author', 'published_date', 'isbn', 'description', 'created_at', 'updated_at']
 #         read_only_fields = ['id', 'created_at', 'updated_at']
+
 
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
@@ -61,7 +62,34 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             validated_data.pop('confirm_password')
             user = User.objects.create_user(**validated_data)
             return user
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+        read_only_fields = ['username','password', ]
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False)
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+        read_only_fields=['id','created_at']
         
+        
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user_instance = User.objects.get(
+            username=user_data['username'])
+        user_instance.save()
+        
+        user_profile_instance = UserProfile.objects.create(
+            **validated_data, user=user_instance)
+        user_profile.save()
+        return user_profile
+
 # class BookSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Book

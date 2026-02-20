@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
-from .models import Book, Task, Author, Product
-from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer
+from .models import Book, Task, Author, Product, UserProfile
+from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer
 from django.contrib.auth import authenticate,login,logout
 from django.shortcuts import render, get_object_or_404,redirect
 from django.views import View
@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView,LogoutView
 from django.contrib import messages
 from .forms import RegistrationForm, LoginForm
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from .permissions import IsOwnerOrReadOnly
 
 
@@ -107,51 +107,59 @@ class UserRegistrationView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)  # 201 = Created (successful resource creation)
     
 
-class LoginView(LoginView):
-    template_name = 'api/login.html'
-    def get(self, request):
-        form= LoginForm()
-        return render(request, self.template_name, { 'form': form})
+# class LoginView(LoginView):
+#     template_name = 'api/login.html'
+#     def get(self, request):
+#         form= LoginForm()
+#         return render(request, self.template_name, { 'form': form})
 
-    def post(self, request):
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+#     def post(self, request):
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
         
-        user = authenticate(username=username, password=password)
-        print(user)
-        if user is None:
-            messages.error(request,"Username or Password not matched")
-            return redirect('/api/login/')
-        login(request,user)
-        return redirect("/api/books/")
+#         user = authenticate(username=username, password=password)
+#         print(user)
+#         if user is None:
+#             messages.error(request,"Username or Password not matched")
+#             return redirect('/api/login/')
+#         login(request,user)
+#         return redirect("/api/books/")
     
 
-class LogoutView(View):
-    def post(self,request):
-        if request.user.is_authenticated:
-            logout(request)
-            return redirect('/api/login/')
+# class LogoutView(View):
+#     def post(self,request):
+#         if request.user.is_authenticated:
+#             logout(request)
+#             return redirect('/api/login/')
 
 
-class RegistrationView(View):
-    def get(self, request):
-        if request.user.is_authenticated:
-            return redirect("/api/books/")
-        form = RegistrationForm()
-        return render(request, 'api/register.html', { 'form': form})  
+# class RegistrationView(View):
+#     def get(self, request):
+#         if request.user.is_authenticated:
+#             return redirect("/api/books/")
+#         form = RegistrationForm()
+#         return render(request, 'api/register.html', { 'form': form})  
     
-    def post(self, request):
-        form = RegistrationForm(request.POST)
-        print(request)
-        try:
-            if form.is_valid():
-                print("valid")
-                form.save()
-                return redirect('/api/login/')   
-        except Exception as error:
-            print("invalid data")
-            print(error)
-        return redirect('/api/register/')     
+#     def post(self, request):
+#         form = RegistrationForm(request.POST)
+#         print(request)
+#         try:
+#             if form.is_valid():
+#                 print("valid")
+#                 form.save()
+#                 return redirect('/api/login/')   
+#         except Exception as error:
+#             print("invalid data")
+#             print(error)
+#         return redirect('/api/register/')     
+
+
+class CreateUserView(generics.ListCreateAPIView):
+    queryset =UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    
 
 # # api/views.py
 # from rest_framework.views import APIView

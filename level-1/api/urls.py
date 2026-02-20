@@ -13,6 +13,7 @@ urlpatterns = [
     path('', include(router.urls)),
     # path('register/', views.RegistrationView.as_view(), name='register'),
     path('register/', views.UserRegistrationView.as_view(), name='register'),
-    path("login/",views.LoginView.as_view(),name="login"),
-    path("logout/",views.LogoutView.as_view(),name="logout")
+    # path("login/",views.LoginView.as_view(),name="login"),
+    # path("logout/",views.LogoutView.as_view(),name="logout")
+    path('user-profile/', views.CreateUserView.as_view(), name='profile'),  
 ]
