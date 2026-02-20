@@ -3,15 +3,6 @@ from django.db import models
 import datetime
 from django.contrib.auth.models import User
 
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='user_profile')
-    created_date = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.user.username
-    
-
 class TimestampedModel(models.Model):
     """Base model with timestamp fields"""
     created_at = models.DateTimeField(auto_now_add=True)
@@ -21,13 +12,21 @@ class TimestampedModel(models.Model):
         abstract = True  # Important: makes it abstract
 
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='user_profile')
+    created_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.username
+    
+
 class Book(TimestampedModel):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=100)
     published_date = models.DateField()
     isbn = models.CharField(max_length=13, unique=True, blank=True, null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='books')
-    # description = models.TextField(blank=True)
+    description = models.TextField(blank=True)
     # created_at = models.DateTimeField(auto_now_add=True)
     # updated_at = models.DateTimeField(auto_now=True)
 

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     'rest_framework',  # Add DRF
     'rest_framework_simplejwt',
     'api',             # Add your app
@@ -169,6 +170,16 @@ REST_FRAMEWORK = {
         'sustained': '1000/day'},
         
     'NUM_PROXIES': 1, 
+    'DEFAULT_FILTER_BACKENDS': [
+        # DjangoFilterBackend: Handles filtering with django-filter (exact matches, ranges, etc.)
+        'django_filters.rest_framework.DjangoFilterBackend',
+        # SearchFilter: Handles searching across multiple fields (built into DRF)
+        'rest_framework.filters.SearchFilter',
+        # OrderingFilter: Handles sorting results (built into DRF)
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 SIMPLE_JWT ={

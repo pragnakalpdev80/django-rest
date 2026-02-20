@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
-        fields = ['id', 'title', 'author', 'published_date', 'isbn', 'owner']
+        fields = ['id', 'title', 'author', 'published_date', 'isbn', 'owner', 'description','created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
@@ -73,7 +73,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(many=False)
+    # username = serializers.CharField(source='user.username', read_only=True)
+    # email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = UserProfile
         fields = '__all__'

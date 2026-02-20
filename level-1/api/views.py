@@ -1,27 +1,33 @@
-from rest_framework import viewsets, status, generics
-from rest_framework.response import Response
-from rest_framework.views import exception_handler
-from django.contrib.auth import authenticate,login,logout
 from django.shortcuts import render, get_object_or_404,redirect
 from django.views import View
+from django.contrib import messages
+from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView,LogoutView
-from django.contrib import messages
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import viewsets, status, generics, filters
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Book, Task, Author, Product, UserProfile
 from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer
 from .forms import RegistrationForm, LoginForm
 from .permissions import IsOwnerOrReadOnly
 from .throttles import BookCreateThrottle
-
+from .filters import BookFilter
+from .pagination import BookLimitOffsetPagination
 
 
 class BookViewSet(viewsets.ModelViewSet):
     permission_classes = [IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly]
-
+    pagination_class = BookLimitOffsetPagination
     queryset = Book.objects.all()
     serializer_class = BookSerializer
+    filterset_class = BookFilter
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    ordering_fields = ['title', 'author', 'published_date', 'created_at']
+    search_fields = ['title', 'author', 'description']
+    ordering = ['-created_at']
 
     def get_throttles(self):
         if self.action == 'create':
