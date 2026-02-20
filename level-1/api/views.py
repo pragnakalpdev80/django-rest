@@ -1,18 +1,20 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
-from .models import Book, Task, Author, Product, UserProfile
-from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer
 from django.contrib.auth import authenticate,login,logout
 from django.shortcuts import render, get_object_or_404,redirect
 from django.views import View
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView,LogoutView
 from django.contrib import messages
-from .forms import RegistrationForm, LoginForm
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from .models import Book, Task, Author, Product, UserProfile
+from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer
+from .forms import RegistrationForm, LoginForm
 from .permissions import IsOwnerOrReadOnly
+from .throttles import BookCreateThrottle
+
 
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -20,6 +22,11 @@ class BookViewSet(viewsets.ModelViewSet):
 
     queryset = Book.objects.all()
     serializer_class = BookSerializer
+
+    def get_throttles(self):
+        if self.action == 'create':
+            return [BookCreateThrottle()]
+        return super().get_throttles()
 
 
 class AuthorViewSet(viewsets.ModelViewSet):
