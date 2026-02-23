@@ -81,6 +81,8 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['-created_at']
     
 class Post(models.Model):
     title = models.CharField(max_length=200)
@@ -88,9 +90,13 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     tags = models.ManyToManyField(Tag, related_name='posts', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(default="", null=False)
 
     def __str__(self):          
-        return self.title    
+        return self.title   
+
+    class Meta:
+        ordering = ['-created_at'] 
 
 
 class Comment(models.Model):
@@ -98,17 +104,17 @@ class Comment(models.Model):
     post = models.ForeignKey(Post,on_delete=models.CASCADE, related_name='comments')
     commenter =  models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     created_at = models.DateTimeField(auto_now_add=True)
-
-class Task_3B(TimestampedModel):
-    title = models.CharField(max_length=100)
-    desc = models.TextField(null=True, blank=True)
-    completed = models.BooleanField(default=False)
-    due_date = models.DateField()
-    assignee = models.ForeignKey(User,on_delete=models.CASCADE,related_name='assigned_tasks')
+    
+    class Meta:
+        ordering = ['-created_at']
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    tasks = models.ManyToManyField(Task_3B,related_name='categories',blank=True)
+    # tasks = models.ManyToManyField(Task_3B,related_name='categories',blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
 
 class Priority(models.Model):
     LEVELS = (
@@ -117,5 +123,24 @@ class Priority(models.Model):
         ('high', 'High'),
     )
 
-    task = models.OneToOneField(Task_3B,on_delete=models.CASCADE,related_name='priority')
     level = models.CharField(max_length=10, choices=LEVELS)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+
+class Task_3B(TimestampedModel):
+    title = models.CharField(max_length=100)
+    desc = models.TextField(null=True, blank=True)
+    completed = models.BooleanField(default=False)
+    due_date = models.DateField()
+    assignee = models.ForeignKey(User,on_delete=models.CASCADE,related_name='assigned_tasks')
+    category = models.ForeignKey(Category,on_delete=models.CASCADE,related_name='category')
+    priority = models.ForeignKey(Priority,on_delete=models.CASCADE,related_name='priority')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+
+

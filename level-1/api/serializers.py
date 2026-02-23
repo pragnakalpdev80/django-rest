@@ -1,8 +1,9 @@
 # api/serializers.py
+import datetime
 from rest_framework import serializers
 from .models import Book, Task, Author, Product, UserProfile, Tag, Post, Comment, Task_3B, Priority, Category
 from django.contrib.auth.models import User
-
+from .validators import validate_titleletters
 
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
@@ -99,11 +100,6 @@ class TagSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['id','created_at']
 
-class PostSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Post
-        fields = '__all__'
-        read_only_fields = ['id','created_at']
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -111,7 +107,45 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['id','created_at']
 
+class PostSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, required=False)
+    comments = CommentSerializer(many=True, read_only=True)
+    class Meta:
+        model = Post
+        fields = '__all__'
+        read_only_fields = ['id','created_at']
+    
+    def create(self, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        request = self.context.get('request')
+        post = Post.objects.create(**validated_data)
+        for tag_data in tags_data:
+            tag, created = Tag.objects.get_or_create(name=tag_data['name'])
+            post.tags.add(tag)
+        
+        return post
+
+    def update(self, instance, validated_data):
+        tags_data = validated_data.pop('tags', None)        
+        instance.title = validated_data.get('title', instance.title)
+        instance.content = validated_data.get('content', instance.content)
+        instance.save()
+        
+        if tags_data is not None:
+            instance.tags.clear()
+            for tag_data in tags_data:
+                tag, created = Tag.objects.get_or_create(name=tag_data['name'])
+                instance.tags.add(tag)
+        
+        return instance
+
 class PrioritySerializer(serializers.ModelSerializer):
+
+    def validate_priority(self,value):
+        if not (value in Priority.LEVELS):
+            raise serializers.ValidationError(f"{value} is not proper value for priority")
+        return value
+
     class Meta:
         model = Priority
         fields = '__all__'
@@ -120,10 +154,17 @@ class PrioritySerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name','tasks']
+        fields = '__all__'
         read_only_fields = ['id']
 
 class Task3BSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(validators=[validate_titleletters,])
+    
+    def validate_due_date(self,value):  
+        if value <= datetime.date.today():
+            raise serializers.ValidationError("Due date must be in future")
+        return value
+    
     class Meta:
         model = Task_3B
         fields = '__all__'
@@ -167,13 +208,9 @@ class Task3BSerializer(serializers.ModelSerializer):
     # def create(self, validated_data):
     #     categories = validated_data.pop('categories', [])
     #     priority_data = validated_data.pop('priority', None)
-
     #     task = Task.objects.create(**validated_data)
-
     #     if categories:
     #         task.categories.set(categories)
-
     #     if priority_data:
     #         Priority.objects.create(task=task, **priority_data)
-
     #     return task

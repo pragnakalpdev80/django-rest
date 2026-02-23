@@ -180,10 +180,10 @@ class Task3ViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return (
             Task_3B.objects
-            .select_related('assignee', 'priority')
-            .prefetch_related('categories')
-            .annotate(category_count=Count('categories'))
-            .filter(Q(category_count__gte=1))
+            # .select_related('assignee', 'priority')
+            # .prefetch_related('categories')
+            # .annotate(category_count=Count('categories'))
+            # .filter(Q(category_count__gte=1))
             .order_by('-created_at')
         )
 
@@ -204,8 +204,8 @@ class PriorityViewSet(viewsets.ModelViewSet):
             'data': serializer.data
         }, status=status.HTTP_201_CREATED)
     
-    def get_queryset(self):
-        return Priority.objects.prefetch_related('task').all()
+    # def get_queryset(self):
+    #     return Priority.objects.prefetch_related('task').all()
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()

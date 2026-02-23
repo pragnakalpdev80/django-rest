@@ -15,7 +15,7 @@ router.register(r'comments',views.CommentViewSet, basename='comment')
 router.register(r'tasks3', views.Task3ViewSet, basename='task3')
 router.register(r'categories', views.CategoryViewSet, basename='category')
 router.register(r'priorities', views.PriorityViewSet, basename='priority')
-
+        
 urlpatterns = [
     path('', include(router.urls)),
     # path('register/', views.RegistrationView.as_view(), name='register'),
