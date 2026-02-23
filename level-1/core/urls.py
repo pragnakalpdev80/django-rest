@@ -16,6 +16,7 @@ Including another URLconf
 """
 # core/urls.py
 from django.contrib import admin
+from django.conf import settings
 from django.urls import path, include
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,  # POST /api/token/ - Get tokens (login)
@@ -36,3 +37,12 @@ urlpatterns = [
     # POST /api/token/verify/ - Verify: Send token, check if it's valid
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]
+
+if settings.DEBUG:
+    try:
+        import debug_toolbar
+        urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
+    except ImportError:
+        pass

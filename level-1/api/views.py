@@ -4,14 +4,15 @@ from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView,LogoutView
+from django.db.models import Count, Q, Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, generics, filters
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Book, Task, Author, Product, UserProfile
-from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer
+from .models import Book, Task, Author, Product, UserProfile, Post, Tag, Comment, Task_3B, Priority, Category
+from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer, PostSerializer, CommentSerializer, TagSerializer, Task3BSerializer, PrioritySerializer, CategorySerializer
 from .forms import RegistrationForm, LoginForm
 from .permissions import IsOwnerOrReadOnly
 from .throttles import BookCreateThrottle
@@ -89,22 +90,64 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
-def custom_exception_handler(exc, context):
-    response = exception_handler(exc, context)
-    print(exc)
-    print(context)
-    print(response)
-    if response is not None:
-        custom_response_data = {
-            'error': 
-                {'status_code': response.status_code,
-                'message': 'An error occurred',
-                'details': response.data}}
-        print(custom_response_data)
-        response.data = custom_response_data
-        print(response.data)
+class PostViewSet(viewsets.ModelViewSet):
+    # queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = []
     
-    return response
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Custom response
+        return Response({
+            'success': True,
+            'message': 'Post created successfully',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    def get_queryset(self):
+        return Post.objects.select_related('author').prefetch_related('tags', 'comments').annotate(comment_count=Count('comments')).all()
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = []
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Custom response
+        return Response({
+            'success': True,
+            'message': 'Tag created successfully',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = []
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Custom response
+        return Response({
+            'success': True,
+            'message': 'Comment created successfully',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+    
+    def get_queryset(self):
+        return Comment.objects.select_related('post','commenter').all()
 
 
 class UserRegistrationView(generics.CreateAPIView):
@@ -125,7 +168,71 @@ class UserRegistrationView(generics.CreateAPIView):
             'access': str(refresh.access_token),  # Access token (short-lived, used for API requests)
         }, status=status.HTTP_201_CREATED)  # 201 = Created (successful resource creation)
     
+class CreateUserView(generics.ListCreateAPIView):
+    queryset =UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+  
+class Task3ViewSet(viewsets.ModelViewSet):
+    serializer_class = Task3BSerializer
+    permission_classes = []
 
+    def get_queryset(self):
+        return (
+            Task_3B.objects
+            .select_related('assignee', 'priority')
+            .prefetch_related('categories')
+            .annotate(category_count=Count('categories'))
+            .filter(Q(category_count__gte=1))
+            .order_by('-created_at')
+        )
+
+class PriorityViewSet(viewsets.ModelViewSet):
+    queryset = Priority.objects.all()
+    serializer_class = PrioritySerializer
+    permission_classes = []
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Custom response
+        return Response({
+            'success': True,
+            'message': 'Tag created successfully',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+    
+    def get_queryset(self):
+        return Priority.objects.prefetch_related('task').all()
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = []
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Custom response
+        return Response({
+            'success': True,
+            'message': 'Tag created successfully',
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+
+# @action(detail=False, methods=['get'])
+# def stats(self, request):
+#     stats = Task.objects.aggregate(
+#         total_tasks=Count('id'),
+#         completed_tasks=Count('id', filter=Q(completed=True))
+#     )
+#     return Response(stats)
+# category_count = serializers.IntegerField(read_only=True)
 # class LoginView(LoginView):
 #     template_name = 'api/login.html'
 #     def get(self, request):
@@ -171,14 +278,6 @@ class UserRegistrationView(generics.CreateAPIView):
 #             print("invalid data")
 #             print(error)
 #         return redirect('/api/register/')     
-
-
-class CreateUserView(generics.ListCreateAPIView):
-    queryset =UserProfile.objects.all()
-    serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
-    
-    
 
 # # api/views.py
 # from rest_framework.views import APIView
@@ -228,3 +327,4 @@ class CreateUserView(generics.ListCreateAPIView):
 #         book = self.get_object(pk)
 #         book.delete()
 #         return Response(status=status.HTTP_204_NO_CONTENT)
+

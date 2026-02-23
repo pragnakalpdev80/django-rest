@@ -45,11 +45,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'api',             # Add your app
     'corsheaders',  # Add this - must be before other apps
-
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # Add this - must be near top
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -216,3 +217,5 @@ SIMPLE_JWT ={
     # Where to store user ID in token payload (used when decoding token)
     'USER_ID_CLAIM': 'user_id',
 }
+
+INTERNAL_IPS = ['127.0.0.1',]

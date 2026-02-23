@@ -72,3 +72,50 @@ class Product(models.Model):
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+#level 3 models
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    
+class Post(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    tags = models.ManyToManyField(Tag, related_name='posts', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):          
+        return self.title    
+
+
+class Comment(models.Model):
+    comment = models.TextField()
+    post = models.ForeignKey(Post,on_delete=models.CASCADE, related_name='comments')
+    commenter =  models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Task_3B(TimestampedModel):
+    title = models.CharField(max_length=100)
+    desc = models.TextField(null=True, blank=True)
+    completed = models.BooleanField(default=False)
+    due_date = models.DateField()
+    assignee = models.ForeignKey(User,on_delete=models.CASCADE,related_name='assigned_tasks')
+
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    tasks = models.ManyToManyField(Task_3B,related_name='categories',blank=True)
+
+class Priority(models.Model):
+    LEVELS = (
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    )
+
+    task = models.OneToOneField(Task_3B,on_delete=models.CASCADE,related_name='priority')
+    level = models.CharField(max_length=10, choices=LEVELS)

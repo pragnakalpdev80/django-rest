@@ -1,6 +1,6 @@
 # api/serializers.py
 from rest_framework import serializers
-from .models import Book, Task, Author, Product, UserProfile
+from .models import Book, Task, Author, Product, UserProfile, Tag, Post, Comment, Task_3B, Priority, Category
 from django.contrib.auth.models import User
 
 
@@ -93,6 +93,42 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_profile.save()
         return user_profile
 
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = '__all__'
+        read_only_fields = ['id','created_at']
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'
+        read_only_fields = ['id','created_at']
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        read_only_fields = ['id','created_at']
+
+class PrioritySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Priority
+        fields = '__all__'
+        read_only_fields = ['id']
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name','tasks']
+        read_only_fields = ['id']
+
+class Task3BSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task_3B
+        fields = '__all__'
+        read_only_fields = ['id']
+        
 # class BookSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Book
@@ -127,3 +163,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
 #         instance.isbn = validated_data.get('isbn', instance.isbn)
 #         instance.save()
 #         return instance
+
+    # def create(self, validated_data):
+    #     categories = validated_data.pop('categories', [])
+    #     priority_data = validated_data.pop('priority', None)
+
+    #     task = Task.objects.create(**validated_data)
+
+    #     if categories:
+    #         task.categories.set(categories)
+
+    #     if priority_data:
+    #         Priority.objects.create(task=task, **priority_data)
+
+    #     return task
