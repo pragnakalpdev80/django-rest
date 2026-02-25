@@ -22,6 +22,8 @@ from .throttles import BookCreateThrottle
 from .filters import BookFilter, TaskFilter
 from .pagination import BookLimitOffsetPagination
 from .services import ExternalAPIService
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -184,10 +186,22 @@ class CreateUserView(generics.ListCreateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
   
-# @method_decorator(cache_page(60 * 15), name='dispatch')
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class Task3ViewSet(viewsets.ModelViewSet):
     serializer_class = Task3BSerializer
     permission_classes = []
+
+    # def perform_create(self, serializer):
+    #     task = serializer.save()
+        
+    #     # Send WebSocket message
+    #     channel_layer = get_channel_layer()
+    #     async_to_sync(channel_layer.group_send)(
+    #         'tasks',
+    #             {
+    #             'type': 'task_message',
+    #             'message': f'New task created: {task.title}'}
+    #     )
 
     def get_queryset(self):
         return (
@@ -241,9 +255,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
             'data': serializer.data
         }, status=status.HTTP_201_CREATED)
 
-class HarrpPotterViewSet(viewsets.ModelViewSet):
-    serializer_class = Task3BSerializer
-    permission_classes=[]
+class HarryPotterViewSet(viewsets.ModelViewSet):
+    # serializer_class = 
+    permission_classes=[]        
     def get_queryset(self):
         return (
             Task_3B.objects
@@ -253,6 +267,7 @@ class HarrpPotterViewSet(viewsets.ModelViewSet):
             # .filter(Q(category_count__gte=1))
             .order_by('-created_at')
         )
+    
     @action(detail=True, methods=['get'])
     def sync_external(self, request, pk=None):
         task = self.get_object()

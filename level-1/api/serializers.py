@@ -175,7 +175,7 @@ class TaskAttachmentSerializer(serializers.ModelSerializer):
         model = TaskAttachment
         fields = ['id', 'task', 'file', 'name', 'uploaded_at']   
         read_only_fields = ['id','uploaded_at']   
-                      
+
 # class BookSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Book

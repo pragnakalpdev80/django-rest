@@ -19,7 +19,7 @@ router.register(r'priorities', views.PriorityViewSet, basename='priority')
         
 urlpatterns = [
     path('', include(router.urls)),
-    path('harrypotter/',views.HarrpPotterViewSet.as_view({'get': 'list'}),name='harry-potter'),
+    path('harrypotter/',views.HarryPotterViewSet.as_view({'get': 'list'}),name='harry-potter'),
     # path('register/', views.RegistrationView.as_view(), name='register'),
     path('register/', views.UserRegistrationView.as_view(), name='register'),
     # path("login/",views.LoginView.as_view(),name="login"),
