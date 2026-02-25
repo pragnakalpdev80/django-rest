@@ -142,5 +142,8 @@ class Task_3B(TimestampedModel):
     class Meta:
         ordering = ['-created_at']
     
-
-
+class TaskAttachment(models.Model):
+    task = models.ForeignKey(Task_3B, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='media/attachments/')
+    name = models.CharField(max_length=200)
+    uploaded_at = models.DateTimeField(auto_now_add=True)

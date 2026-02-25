@@ -8,16 +8,20 @@ from django.db.models import Count, Q, Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, generics, filters
 from rest_framework.response import Response
-from rest_framework.views import exception_handler
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Book, Task, Author, Product, UserProfile, Post, Tag, Comment, Task_3B, Priority, Category
-from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer, PostSerializer, CommentSerializer, TagSerializer, Task3BSerializer, PrioritySerializer, CategorySerializer
+from .models import Book, Task, Author, Product, UserProfile, Post, Tag, Comment, Task_3B, Priority, Category, TaskAttachment
+from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer, PostSerializer, CommentSerializer, TagSerializer, Task3BSerializer, PrioritySerializer, CategorySerializer, TaskAttachmentSerializer
 from .forms import RegistrationForm, LoginForm
 from .permissions import IsOwnerOrReadOnly
 from .throttles import BookCreateThrottle
 from .filters import BookFilter, TaskFilter
 from .pagination import BookLimitOffsetPagination
+from .services import ExternalAPIService
 
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -50,12 +54,19 @@ class TaskViewSet(viewsets.ModelViewSet):
     ordering_fields = ['title', 'priority', 'created_at']
     search_fields = ['title', 'desc']
     ordering = ['-created_at']
+    permission_classes = []
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        
+        # channel_layer = get_channel_layer()
+        # async_to_sync(channel_layer.group_send)(
+        #     'tasks',
+            
+        #         {'type': 'task_message',
+        #         'message': f'New task created: {task.title}'}
+        # )
         # Custom response
         return Response({
             'success': True,
@@ -84,7 +95,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             'count': queryset.count(),
             'results': serializer.data  
         })
-
+    
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -173,6 +184,7 @@ class CreateUserView(generics.ListCreateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
   
+# @method_decorator(cache_page(60 * 15), name='dispatch')
 class Task3ViewSet(viewsets.ModelViewSet):
     serializer_class = Task3BSerializer
     permission_classes = []
@@ -186,6 +198,11 @@ class Task3ViewSet(viewsets.ModelViewSet):
             # .filter(Q(category_count__gte=1))
             .order_by('-created_at')
         )
+
+class TaskAttachmentViewSet(viewsets.ModelViewSet):
+    queryset = TaskAttachment.objects.all()
+    serializer_class = TaskAttachmentSerializer
+    permission_classes = []
 
 class PriorityViewSet(viewsets.ModelViewSet):
     queryset = Priority.objects.all()
@@ -224,7 +241,29 @@ class CategoryViewSet(viewsets.ModelViewSet):
             'data': serializer.data
         }, status=status.HTTP_201_CREATED)
 
-
+class HarrpPotterViewSet(viewsets.ModelViewSet):
+    serializer_class = Task3BSerializer
+    permission_classes=[]
+    def get_queryset(self):
+        return (
+            Task_3B.objects
+            # .select_related('assignee', 'priority')
+            # .prefetch_related('categories')
+            # .annotate(category_count=Count('categories'))
+            # .filter(Q(category_count__gte=1))
+            .order_by('-created_at')
+        )
+    @action(detail=True, methods=['get'])
+    def sync_external(self, request, pk=None):
+        task = self.get_object()
+        service = ExternalAPIService()
+        
+        try:
+            data = service.get_data()
+            return Response({'status': 'synced', 'external_id': data})
+        except requests.exceptions.RequestException as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 # @action(detail=False, methods=['get'])
 # def stats(self, request):
 #     stats = Task.objects.aggregate(

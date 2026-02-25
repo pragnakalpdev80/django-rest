@@ -18,15 +18,21 @@ Including another URLconf
 from django.contrib import admin
 from django.conf import settings
 from django.urls import path, include
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,  # POST /api/token/ - Get tokens (login)
     TokenRefreshView,     # POST /api/token/refresh/ - Get new access token
     TokenVerifyView,      # POST /api/token/verify/ - Check if token is valid
 )
+from strawberry.django.views import GraphQLView
+from api.schema import schema
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    path('api/v1/', include(('api.urls', 'api'), namespace='v1')),
+    path('api/v2/', include(('api.urls', 'api'), namespace='v2')),
     # JWT authentication endpoints
     # POST /api/token/ - Login: Send username/password, get access+refresh tokens
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -36,6 +42,10 @@ urlpatterns = [
     
     # POST /api/token/verify/ - Verify: Send token, check if it's valid
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('graphql/', GraphQLView.as_view(schema=schema))
 ]
 
 if settings.DEBUG:

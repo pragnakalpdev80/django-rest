@@ -13,11 +13,13 @@ router.register(r'posts', views.PostViewSet, basename='post')
 router.register(r'tags', views.TagViewSet, basename='tag')
 router.register(r'comments',views.CommentViewSet, basename='comment')
 router.register(r'tasks3', views.Task3ViewSet, basename='task3')
+router.register(r'attachments', views.TaskAttachmentViewSet, basename='attachment')
 router.register(r'categories', views.CategoryViewSet, basename='category')
 router.register(r'priorities', views.PriorityViewSet, basename='priority')
         
 urlpatterns = [
     path('', include(router.urls)),
+    path('harrypotter/',views.HarrpPotterViewSet.as_view({'get': 'list'}),name='harry-potter'),
     # path('register/', views.RegistrationView.as_view(), name='register'),
     path('register/', views.UserRegistrationView.as_view(), name='register'),
     # path("login/",views.LoginView.as_view(),name="login"),

@@ -1,7 +1,7 @@
 # api/serializers.py
 import datetime
 from rest_framework import serializers
-from .models import Book, Task, Author, Product, UserProfile, Tag, Post, Comment, Task_3B, Priority, Category
+from .models import Book, Task, Author, Product, UserProfile, Tag, Post, Comment, Task_3B, Priority, Category, TaskAttachment
 from django.contrib.auth.models import User
 from .validators import validate_titleletters
 
@@ -108,8 +108,8 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id','created_at']
 
 class PostSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, required=False)
-    comments = CommentSerializer(many=True, read_only=True)
+    # tags = TagSerializer(many=True, required=False)
+    # comments = CommentSerializer(many=True, read_only=True)
     class Meta:
         model = Post
         fields = '__all__'
@@ -169,7 +169,13 @@ class Task3BSerializer(serializers.ModelSerializer):
         model = Task_3B
         fields = '__all__'
         read_only_fields = ['id']
-        
+
+class TaskAttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskAttachment
+        fields = ['id', 'task', 'file', 'name', 'uploaded_at']   
+        read_only_fields = ['id','uploaded_at']   
+                      
 # class BookSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Book
