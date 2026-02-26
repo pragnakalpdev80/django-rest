@@ -16,10 +16,12 @@ router.register(r'tasks3', views.Task3ViewSet, basename='task3')
 router.register(r'attachments', views.TaskAttachmentViewSet, basename='attachment')
 router.register(r'categories', views.CategoryViewSet, basename='category')
 router.register(r'priorities', views.PriorityViewSet, basename='priority')
-        
+
 urlpatterns = [
     path('', include(router.urls)),
     path('harrypotter/',views.HarryPotterViewSet.as_view({'get': 'list'}),name='harry-potter'),
+    path('harrypotter/staff/',views.HarryPotterStaffViewSet.as_view({'get': 'list'}),name='harry-potter-staff'),
+    path('harrypotter/house/',views.HarryPotterHouseViewSet.as_view({'get': 'list'}),name='harry-potter-house'),
     # path('register/', views.RegistrationView.as_view(), name='register'),
     path('register/', views.UserRegistrationView.as_view(), name='register'),
     # path("login/",views.LoginView.as_view(),name="login"),

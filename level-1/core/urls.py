@@ -31,8 +31,8 @@ from api.schema import schema
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('api/v1/', include(('api.urls', 'api'), namespace='v1')),
-    path('api/v2/', include(('api.urls', 'api'), namespace='v2')),
+    # path('api/v1/', include(('api.urls', 'api'), namespace='v1')),
+    # path('api/v2/', include(('api.urls', 'api'), namespace='v2')),
     # JWT authentication endpoints
     # POST /api/token/ - Login: Send username/password, get access+refresh tokens
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

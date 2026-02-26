@@ -1,5 +1,9 @@
 from django.shortcuts import render, get_object_or_404,redirect
 from django.views import View
+from django.utils import timezone
+from datetime import timedelta
+import json
+from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.models import User
@@ -14,11 +18,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Book, Task, Author, Product, UserProfile, Post, Tag, Comment, Task_3B, Priority, Category, TaskAttachment
+from .models import Book, Task, Author, Product, UserProfile, Post, Tag, Comment, Task_3B, Priority, Category, TaskAttachment, Analytics
 from .serializers import BookSerializer, TaskSerializer, AuthorSerializer, ProductSerializer, UserRegistrationSerializer, UserProfileSerializer, PostSerializer, CommentSerializer, TagSerializer, Task3BSerializer, PrioritySerializer, CategorySerializer, TaskAttachmentSerializer
 from .forms import RegistrationForm, LoginForm
 from .permissions import IsOwnerOrReadOnly
 from .throttles import BookCreateThrottle
+from .tasks import generate_weekly_analytics_report
 from .filters import BookFilter, TaskFilter
 from .pagination import BookLimitOffsetPagination
 from .services import ExternalAPIService
@@ -212,6 +217,9 @@ class Task3ViewSet(viewsets.ModelViewSet):
             # .filter(Q(category_count__gte=1))
             .order_by('-created_at')
         )
+        # task = generate_weekly_analytics_report()
+        # res = json.dumps(task)
+        # return res
 
 class TaskAttachmentViewSet(viewsets.ModelViewSet):
     queryset = TaskAttachment.objects.all()
@@ -255,30 +263,104 @@ class CategoryViewSet(viewsets.ModelViewSet):
             'data': serializer.data
         }, status=status.HTTP_201_CREATED)
 
-class HarryPotterViewSet(viewsets.ModelViewSet):
-    # serializer_class = 
-    permission_classes=[]        
-    def get_queryset(self):
-        return (
-            Task_3B.objects
-            # .select_related('assignee', 'priority')
-            # .prefetch_related('categories')
-            # .annotate(category_count=Count('categories'))
-            # .filter(Q(category_count__gte=1))
-            .order_by('-created_at')
-        )
+class HarryPotterViewSet(viewsets.ViewSet):
     
-    @action(detail=True, methods=['get'])
-    def sync_external(self, request, pk=None):
-        task = self.get_object()
+    permission_classes = [] 
+
+    def list(self, request):
         service = ExternalAPIService()
-        
+       
         try:
-            data = service.get_data()
-            return Response({'status': 'synced', 'external_id': data})
-        except requests.exceptions.RequestException as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            data = service.get_characters()
+            extracted_data = [
+                {
+                    "name": char.get("name"),
+                    "house": char.get("house"),
+                    "actor": char.get("actor"),
+                    "species": char.get("species"),
+                    "patronus": char.get("patronus"),
+                    "dateOfBirth": char.get("dateOfBirth"),
+                    "alive": char.get("alive"),
+                    "image": char.get("image")
+                } for char in data
+            ]
+
+            return Response(extracted_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': 'Failed to fetch external data', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)       
+
+class HarryPotterStaffViewSet(viewsets.ViewSet):
+    
+    permission_classes = [] 
+
+    def list(self, request):
+        try:
+            service = ExternalAPIService()
+            data = service.get_hogwarts_staff()
+            extracted_data = [
+                {
+                    "name": char.get("name"),
+                    "house": char.get("house"),
+                    "actor": char.get("actor"),
+                    "patronus": char.get("patronus"),
+                    "alive": char.get("alive"),
+                    "image": char.get("image")
+                } for char in data
+            ]
+            return Response(extracted_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': 'Failed to fetch external data', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class HarryPotterHouseViewSet(viewsets.ViewSet):
+    
+    permission_classes = [] 
+
+    def list(self, request):
+        service = ExternalAPIService()
+        print(request)
+        house = request.query_params.get('house')
+        print(house)
+        try:
+            data = service.get_characters_by_house(house)
+            extracted_data = [
+                {
+                    "name": char.get("name"),
+                    "actor": char.get("actor"),
+                    "patronus": char.get("patronus"),
+                    "alive": char.get("alive"),
+                    "image": char.get("image")
+                } for char in data
+            ]
+            return Response(extracted_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': 'Failed to fetch external data', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AnalyticsViewSet(viewsets.ViewSet):
+    permission_classes = []
+    
+    def list(self, request):
+        # Aggregate data
+        stats = Task_3B.objects.aggregate(
+            total=Count('id'),
+            completed=Count('id', filter=Q(completed=True)),
+            pending=Count('id', filter=Q(completed=False))
+        )
         
+        # Time-based stats
+        last_7_days = timezone.now() - timedelta(days=7)
+        recent_stats = Task.objects.filter(
+            created_at__gte=last_7_days
+        ).aggregate(
+            created=Count('id')
+        )
+        
+        return Response({
+            'overall': stats,
+            'recent': recent_stats
+        })
 # @action(detail=False, methods=['get'])
 # def stats(self, request):
 #     stats = Task.objects.aggregate(

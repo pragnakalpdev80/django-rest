@@ -147,3 +147,12 @@ class TaskAttachment(models.Model):
     file = models.FileField(upload_to='media/attachments/')
     name = models.CharField(max_length=200)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+class Analytics(models.Model):
+    date = models.DateField()
+    total_tasks = models.IntegerField(default=0)
+    completed_tasks = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']

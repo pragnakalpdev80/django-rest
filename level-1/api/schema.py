@@ -5,6 +5,7 @@ from .models import Task, Book
 from django.contrib.auth.models import User
 # from strawberry.django.auth import login, logout
 from strawberry.types import Info
+from django.db.models import Count, Q
 
 @strawberry.django.type(Task)
 class TaskType(DjangoModelType):
@@ -19,6 +20,12 @@ class BookType(DjangoModelType):
         fields = ['id', 'title', 'author', 'published_date']
 
 @strawberry.type
+class AnalyticsType:
+    total: int
+    completed: int
+    pending: int
+    
+@strawberry.type
 class Query:
     @strawberry.field
     def tasks(self) -> list[TaskType]:
@@ -31,6 +38,15 @@ class Query:
     @strawberry.field
     def books(self) -> list[BookType]:
         return Book.objects.all()
+    
+    @strawberry.field
+    def analytics(self) -> AnalyticsType:
+        stats = Task.objects.aggregate(
+            total=Count('id'),
+            completed=Count('id', filter=Q(completed=True)),
+            pending=Count('id', filter=Q(completed=False))
+        )
+        return AnalyticsType(**stats)
 
 @strawberry.type
 class Mutation:
